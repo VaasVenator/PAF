@@ -29,7 +29,7 @@ input {
     #f4f7fb;
 }
 
-.login-card {
+.auth-card {
   width: min(100%, 420px);
   padding: 32px;
   background: #ffffff;
@@ -38,13 +38,26 @@ input {
   box-shadow: 0 18px 40px rgba(25, 39, 62, 0.08);
 }
 
+.home-shell {
+  width: min(100%, 960px);
+  display: grid;
+  gap: 20px;
+}
+
+.hero-card,
 .panel-card {
-  width: min(100%, 760px);
   padding: 32px;
   background: #ffffff;
   border: 1px solid #dde5ef;
   border-radius: 18px;
   box-shadow: 0 18px 40px rgba(25, 39, 62, 0.08);
+}
+
+.hero-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .panel-header {
@@ -53,6 +66,58 @@ input {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.info-card {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #dde5ef;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(25, 39, 62, 0.08);
+}
+
+.info-card h2,
+.panel-card h2 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.info-card p {
+  margin: 0;
+  color: #5d6b7c;
+}
+
+.details-list {
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.details-list div {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f7f9fc;
+}
+
+.details-list dt {
+  margin: 0 0 4px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6c7b8d;
+}
+
+.details-list dd {
+  margin: 0;
+  color: #1f2b38;
+  word-break: break-word;
 }
 
 .login-copy h1 {
@@ -78,6 +143,32 @@ input {
   margin-top: 28px;
 }
 
+.auth-switch {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 24px;
+  padding: 6px;
+  border-radius: 14px;
+  background: #f3f6fa;
+}
+
+.switch-button {
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #5d6b7c;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch-button.is-active {
+  background: #ffffff;
+  color: #1b2430;
+  box-shadow: 0 2px 10px rgba(25, 39, 62, 0.08);
+}
+
 .field {
   display: block;
   margin-bottom: 18px;
@@ -88,6 +179,13 @@ input {
   margin-bottom: 8px;
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.88rem;
+  color: #6a7788;
 }
 
 .field input {
@@ -210,11 +308,12 @@ input {
 }
 
 @media (max-width: 520px) {
-  .login-card,
+  .auth-card,
   .panel-card {
     padding: 24px;
   }
 
+  .hero-card,
   .panel-header,
   .notification-item {
     display: block;
@@ -223,5 +322,11 @@ input {
   .secondary-button {
     width: 100%;
     margin-top: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .demo-grid {
+    grid-template-columns: 1fr;
   }
 }
