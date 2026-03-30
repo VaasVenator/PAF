@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record CreateNotificationRequest(
         @NotNull(message = "User ID is required")
-        Long userId,
+        String userId,
 
         @NotBlank(message = "Message is required")
         @Size(max = 500, message = "Message must be 500 characters or less")

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,7 @@ public class NotificationController {
     }
 
     @GetMapping("/{userId}")
-    public List<Notification> getNotificationsByUserId(@PathVariable Long userId) {
+    public List<Notification> getNotificationsByUserId(@PathVariable String userId) {
         return notificationRepository.findByUserIdOrderByTimestampDesc(userId);
     }
 
@@ -38,5 +39,15 @@ public class NotificationController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(notificationRepository.save(notification));
+    }
+
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<Notification> markAsRead(@PathVariable String notificationId) {
+        return notificationRepository.findById(notificationId)
+                .map(notification -> {
+                    notification.setRead(true);
+                    return ResponseEntity.ok(notificationRepository.save(notification));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

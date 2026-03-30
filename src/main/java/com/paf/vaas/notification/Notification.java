@@ -1,52 +1,42 @@
 package com.paf.vaas.notification;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "notifications")
+@Document(collection = "notifications")
 public class Notification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
-    private Long userId;
+    private String userId;
 
-    @Column(nullable = false, length = 500)
     private String message;
 
-    @Column(name = "is_read", nullable = false)
     private boolean read;
 
-    @Column(nullable = false)
     private LocalDateTime timestamp;
 
     protected Notification() {
     }
 
-    public Notification(Long userId, String message, boolean read, LocalDateTime timestamp) {
+    public Notification(String userId, String message, boolean read, LocalDateTime timestamp) {
         this.userId = userId;
         this.message = message;
         this.read = read;
         this.timestamp = timestamp;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

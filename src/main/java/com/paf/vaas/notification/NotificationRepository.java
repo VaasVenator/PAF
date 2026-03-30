@@ -1,9 +1,9 @@
 package com.paf.vaas.notification;
 
 import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepository extends MongoRepository<Notification, String> {
 
-    List<Notification> findByUserIdOrderByTimestampDesc(Long userId);
+    List<Notification> findByUserIdOrderByTimestampDesc(String userId);
 }

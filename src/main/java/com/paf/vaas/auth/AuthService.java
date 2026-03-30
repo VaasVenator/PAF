@@ -10,7 +10,6 @@ import com.paf.vaas.user.User;
 import com.paf.vaas.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -32,7 +31,6 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new AuthException("Email is already in use");
@@ -54,7 +52,6 @@ public class AuthService {
         return new AuthResponse(token, savedUser.getId(), savedUser.getEmail(), savedUser.getRole().getName().name());
     }
 
-    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email().trim().toLowerCase())
                 .orElseThrow(() -> new AuthException("Invalid email or password"));
