@@ -1,24 +1,14 @@
 package com.paf.vaas.role;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "roles")
+@Document(collection = "roles")
 public class Role {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true, length = 30)
     private RoleName name;
 
     protected Role() {
@@ -28,7 +18,7 @@ public class Role {
         this.name = name;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
