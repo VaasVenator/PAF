@@ -25,6 +25,10 @@ input {
   font: inherit;
 }
 
+select {
+  font: inherit;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -247,7 +251,23 @@ code {
   transition: border-color 180ms ease, background 180ms ease;
 }
 
+.field select {
+  width: 100%;
+  padding: 0.92rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8f3e8;
+  outline: none;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
 .field input:focus {
+  border-color: rgba(240, 168, 94, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.field select:focus {
   border-color: rgba(240, 168, 94, 0.7);
   background: rgba(255, 255, 255, 0.08);
 }
@@ -280,6 +300,68 @@ code {
 
 .form-message {
   margin: 0.8rem 0 0;
+}
+
+.resource-toolbar {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.resource-filter-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.resource-create-button {
+  width: fit-content;
+  margin-top: 0;
+}
+
+.resource-form-panel {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.resource-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.resource-form h3 {
+  margin: 0;
+}
+
+.resource-form-actions,
+.resource-card-actions,
+.pagination-bar {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.secondary-button,
+.danger-button {
+  padding: 0.65rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8f3e8;
+  cursor: pointer;
+}
+
+.danger-button {
+  border-color: rgba(255, 141, 122, 0.55);
+  background: rgba(255, 141, 122, 0.14);
+}
+
+.pagination-bar {
+  margin-top: 1rem;
 }
 
 .form-message-error {
