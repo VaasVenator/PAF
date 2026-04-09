@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 
 import com.vaas.paf.booking.dto.CreateBookingRequest;
 import com.vaas.paf.booking.model.BookingDocument;
-import com.vaas.paf.booking.model.BookingStatus;
 import com.vaas.paf.booking.repo.BookingRepository;
 import com.vaas.paf.booking.service.BookingService;
 import com.vaas.paf.common.AppException;
