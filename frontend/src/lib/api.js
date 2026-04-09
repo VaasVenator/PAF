@@ -17,6 +17,10 @@ function buildHeaders(user, extraHeaders = {}) {
 }
 
 async function parseResponse(response) {
+  if (response.status === 204) {
+    return null;
+  }
+
   const contentType = response.headers.get("content-type") ?? "";
   const payload = contentType.includes("application/json")
     ? await response.json()
@@ -42,6 +46,23 @@ export async function apiPost(path, body, user) {
     method: "POST",
     headers: buildHeaders(user),
     body: JSON.stringify(body)
+  });
+  return parseResponse(response);
+}
+
+export async function apiPut(path, body, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PUT",
+    headers: buildHeaders(user),
+    body: JSON.stringify(body)
+  });
+  return parseResponse(response);
+}
+
+export async function apiDelete(path, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "DELETE",
+    headers: buildHeaders(user)
   });
   return parseResponse(response);
 }
