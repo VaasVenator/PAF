@@ -42,12 +42,26 @@ code {
 
 #root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+#root > .shell {
+  align-items: stretch;
+  justify-content: stretch;
+  width: 100%;
+  height: 100%;
 }
 
 .shell {
   display: grid;
   grid-template-columns: 290px 1fr;
   min-height: 100vh;
+  width: 100%;
+  height: auto;
   transition: grid-template-columns 220ms ease;
 }
 
@@ -123,6 +137,17 @@ code {
 
 .content {
   padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.content > section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .content-toolbar {
@@ -243,6 +268,37 @@ code {
   margin-top: 1.4rem;
 }
 
+.login-mode-toggle {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.4rem;
+  border-radius: 14px;
+}
+
+.login-mode-button {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(248, 243, 232, 0.6);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.login-mode-button:hover {
+  color: rgba(248, 243, 232, 0.8);
+}
+
+.login-mode-button.active {
+  background: rgba(240, 168, 94, 0.2);
+  border-color: rgba(240, 168, 94, 0.5);
+  color: #f0a85e;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -273,12 +329,22 @@ code {
 .field select {
   width: 100%;
   padding: 0.92rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(240, 168, 94, 0.4);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(30, 25, 20, 0.85);
   color: #f8f3e8;
   outline: none;
   transition: border-color 180ms ease, background 180ms ease;
+}
+
+.field select option {
+  background: #1a1a1a;
+  color: #f8f3e8;
+}
+
+.field select option:checked {
+  background: linear-gradient(135deg, #f0a85e, #ffcf72);
+  color: #171717;
 }
 
 .field input:focus {
@@ -512,13 +578,16 @@ code {
   padding: 1.4rem;
   border-radius: 28px;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .card-grid,
 .data-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  width: 100%;
 }
 
 .info-card,
@@ -767,4 +836,57 @@ code {
   .two-columns {
     grid-template-columns: 1fr;
   }
+}
+
+.admin-bookings-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.admin-bookings-filter {
+  min-width: 200px;
+}
+
+.admin-booking-card {
+  margin-bottom: 1rem;
+}
+
+.admin-booking-actions {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-booking-button-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-booking-cancel-row {
+  margin-top: 1rem;
+}
+
+.booking-review-textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 0.92rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8f3e8;
+  outline: none;
+  resize: vertical;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.booking-review-textarea:focus {
+  border-color: rgba(240, 168, 94, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.booking-reason {
+  margin-top: 0.8rem;
+  color: rgba(248, 243, 232, 0.8);
 }
