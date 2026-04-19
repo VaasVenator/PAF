@@ -1,6 +1,7 @@
 package com.vaas.paf.config;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -36,19 +37,21 @@ public class AdminSeeder implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) {
-		if (userRepository.existsByStudentId(adminStudentId)) {
-			return;
+		Optional<UserDocument> existingAdmin = userRepository.findByStudentId(adminStudentId);
+		if (existingAdmin.isEmpty()) {
+			existingAdmin = userRepository.findByUsernameIgnoreCase(adminUsername);
 		}
 
-		UserDocument admin = UserDocument.builder()
-				.studentId(adminStudentId)
-				.username(adminUsername)
-				.firstName("System")
-				.lastName("Admin")
-				.passwordHash(passwordEncoder.encode(adminPassword))
-				.role(UserRole.ADMIN)
+		UserDocument admin = existingAdmin.orElseGet(() -> UserDocument.builder()
 				.createdAt(Instant.now())
-				.build();
+				.build());
+
+		admin.setStudentId(adminStudentId);
+		admin.setUsername(adminUsername);
+		admin.setFirstName("System");
+		admin.setLastName("Admin");
+		admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+		admin.setRole(UserRole.ADMIN);
 
 		userRepository.save(admin);
 	}
