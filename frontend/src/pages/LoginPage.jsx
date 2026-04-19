@@ -33,7 +33,16 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="auth-card">
+    <div className="auth-shell">
+      <button 
+        type="button" 
+        className="back-button"
+        onClick={() => navigate("/")}
+        aria-label="Go back to home"
+      >
+        ← Back
+      </button>
+      <section className="auth-card">
       <div className="auth-copy">
         <p className="auth-eyebrow">Welcome back</p>
         <h2>Sign in to your campus workspace</h2>
@@ -98,5 +107,6 @@ export default function LoginPage() {
         New here? <Link to="/signup">Create an account</Link>
       </p>
     </section>
+    </div>
   );
 }

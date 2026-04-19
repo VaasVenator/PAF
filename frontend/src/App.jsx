@@ -12,6 +12,9 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ProfilePage from "./pages/ProfilePage";
 import OAuthSuccessPage from "./pages/OAuthSuccessPage";
+import HomePage from "./pages/HomePage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -23,7 +26,7 @@ export default function App() {
   }
 
   const navItems = [
-    { to: "/", label: "Overview" },
+    { to: "/dashboard", label: "Overview" },
     { to: "/resources", label: "Resources" },
     { to: "/bookings", label: "Bookings" },
     { to: "/tickets", label: "Tickets" },
@@ -38,15 +41,29 @@ export default function App() {
     location.pathname === "/signup" ||
     location.pathname === "/oauth-success";
 
-  if (isAuthPage || !user) {
+  const isPublicPage = 
+    location.pathname === "/" ||
+    location.pathname === "/about" ||
+    location.pathname === "/contact";
+
+  // Show public pages (including auth pages) if not authenticated
+  if (!user && (isAuthPage || isPublicPage)) {
     return (
       <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/oauth-success" element={<OAuthSuccessPage />} />
-        <Route path="*" element={user ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
+  }
+
+  // Redirect unauthenticated users trying to access protected routes to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -64,7 +81,7 @@ export default function App() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === "/"}
+              end={item.to === "/dashboard"}
               className={({ isActive }) =>
                 isActive ? "nav-link nav-link-active" : "nav-link"
               }
@@ -106,8 +123,12 @@ export default function App() {
 
         <Routes>
           <Route
-            path="/"
+            path="/dashboard"
             element={user ? <DashboardPage /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/"
+            element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
           />
           <Route
             path="/resources"
