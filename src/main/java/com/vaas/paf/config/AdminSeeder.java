@@ -25,7 +25,7 @@ public class AdminSeeder implements ApplicationRunner {
 	public AdminSeeder(
 			UserRepository userRepository,
 			PasswordEncoder passwordEncoder,
-			@Value("${app.demo.admin.student-id:IT00000001}") String adminStudentId,
+			@Value("${app.demo.admin.student-id:STF00000001}") String adminStudentId,
 			@Value("${app.demo.admin.username:admin}") String adminUsername,
 			@Value("${app.demo.admin.password:Admin@1234}") String adminPassword) {
 		this.userRepository = userRepository;
@@ -53,6 +53,7 @@ public class AdminSeeder implements ApplicationRunner {
 		admin.setPasswordHash(passwordEncoder.encode(adminPassword));
 		admin.setRole(UserRole.ADMIN);
 
-		userRepository.save(admin);
+		@SuppressWarnings({"null", "unused"})
+		UserDocument saved = userRepository.save(admin);
 	}
 }
