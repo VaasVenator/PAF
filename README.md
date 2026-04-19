@@ -44,6 +44,7 @@ Spring Boot REST API + React web application for the IT3030 PAF 2026 assignment.
 ### Module E: Authentication & Authorization
 
 - Student sign up and login
+- Google OAuth 2.0 sign-in flow
 - Student ID validation with `ITXXXXXXXX` format
 - Password hashing with BCrypt
 - Role-aware backend behavior for `USER`, `ADMIN`, and `TECHNICIAN`
@@ -71,6 +72,9 @@ Example:
 ```env
 SERVER_PORT=8081
 MONGODB_URI="mongodb+srv://<username>:<password>@<cluster>/<database>?authSource=admin&retryWrites=true&w=majority&appName=Cluster0"
+FRONTEND_BASE_URL=http://localhost:5173
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 ### 2. Frontend environment
@@ -143,6 +147,10 @@ npm run build
 
 The CI workflow builds and tests both backend and frontend on each push and pull request.
 
-## Current Note On OAuth
+## OAuth Notes
 
-The project currently includes secure sign up/login, password hashing, role-aware routing, and protected flows. If your group must demonstrate Google OAuth specifically, add Google client credentials and extend the current auth layer with Spring Security OAuth2 login configuration before final submission.
+Google OAuth works once the Google client credentials are added to the backend `.env` file and the redirect URI is configured as:
+
+```text
+http://localhost:8081/login/oauth2/code/google
+```

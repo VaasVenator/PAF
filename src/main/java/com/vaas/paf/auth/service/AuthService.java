@@ -65,11 +65,18 @@ public class AuthService {
 	}
 
 	public AuthUserResponse login(LoginRequest request) {
-		UserDocument user = userRepository.findByStudentId(request.studentId().trim().toUpperCase())
-				.orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID or password."));
+		String loginId = request.studentId().trim();
+		UserDocument user = userRepository.findByStudentId(loginId.toUpperCase())
+				.or(() -> userRepository.findByUsernameIgnoreCase(loginId))
+				.or(() -> userRepository.findByEmailIgnoreCase(loginId.toLowerCase(Locale.ROOT)))
+				.orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID, username, email, or password."));
+
+		if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+			throw new AppException(HttpStatus.UNAUTHORIZED, "This account uses Google sign-in. Please continue with Google.");
+		}
 
 		if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-			throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID or password.");
+			throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID, username, email, or password.");
 		}
 
 		return toResponse(user);
