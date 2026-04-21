@@ -21,7 +21,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(credentials) {
-    const signedInUser = await apiPost("/api/auth/login", credentials, null);
+    const signedInUser = await apiPost("/api/auth/login", {
+      ...credentials,
+      loginMode: credentials.loginMode || "student"
+    }, null);
     setUser(signedInUser);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(signedInUser));
     return signedInUser;

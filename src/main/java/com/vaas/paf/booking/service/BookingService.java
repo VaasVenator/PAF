@@ -1,12 +1,5 @@
+// src/main/java/com/vaas/paf/booking/service/BookingService.java
 package com.vaas.paf.booking.service;
-
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
 
 import com.vaas.paf.booking.dto.BookingResponse;
 import com.vaas.paf.booking.dto.CreateBookingRequest;
@@ -15,166 +8,206 @@ import com.vaas.paf.booking.model.BookingDocument;
 import com.vaas.paf.booking.model.BookingStatus;
 import com.vaas.paf.booking.repo.BookingRepository;
 import com.vaas.paf.common.AppException;
-import com.vaas.paf.notification.model.NotificationType;
 import com.vaas.paf.notification.service.NotificationService;
 import com.vaas.paf.resource.model.ResourceDocument;
 import com.vaas.paf.resource.model.ResourceStatus;
 import com.vaas.paf.resource.service.ResourceService;
 import com.vaas.paf.security.AccessGuard;
 import com.vaas.paf.security.AuthenticatedUser;
-import com.vaas.paf.security.UserRole;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 public class BookingService {
 
-	private static final Set<BookingStatus> BLOCKING_STATUSES = EnumSet.of(BookingStatus.PENDING, BookingStatus.APPROVED);
+    private final BookingRepository bookingRepository;
+    private final ResourceService resourceService;
+    private final AccessGuard accessGuard;
 
-	private final BookingRepository bookingRepository;
-	private final ResourceService resourceService;
-	private final NotificationService notificationService;
-	private final AccessGuard accessGuard;
+    public BookingService(BookingRepository bookingRepository, ResourceService resourceService, 
+                          AccessGuard accessGuard) {
+        this.bookingRepository = bookingRepository;
+        this.resourceService = resourceService;
+        this.accessGuard = accessGuard;
+    }
 
-	public BookingService(
-			BookingRepository bookingRepository,
-			ResourceService resourceService,
-			NotificationService notificationService,
-			AccessGuard accessGuard) {
-		this.bookingRepository = bookingRepository;
-		this.resourceService = resourceService;
-		this.notificationService = notificationService;
-		this.accessGuard = accessGuard;
-	}
+    public BookingResponse create(CreateBookingRequest request) {
+        AuthenticatedUser currentUser = accessGuard.currentUser();
+        
+        ResourceDocument resource = resourceService.getDocument(request.resourceId());
+        
+        if (resource.getStatus() != ResourceStatus.ACTIVE) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Resource is not available for booking");
+        }
 
-	public BookingResponse create(CreateBookingRequest request) {
-		AuthenticatedUser user = accessGuard.currentUser();
-		ResourceDocument resource = resourceService.getDocument(request.resourceId());
-		validateBookingRequest(request, resource);
+        if (!request.startTime().isBefore(request.endTime())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Start time must be before end time");
+        }
 
-		BookingDocument booking = BookingDocument.builder()
-				.resourceId(resource.getId())
-				.resourceName(resource.getName())
-				.requesterId(user.userId())
-				.requesterName(user.displayName())
-				.bookingDate(request.bookingDate())
-				.startTime(request.startTime())
-				.endTime(request.endTime())
-				.purpose(request.purpose())
-				.expectedAttendees(request.expectedAttendees())
-				.status(BookingStatus.PENDING)
-				.createdAt(Instant.now())
-				.updatedAt(Instant.now())
-				.build();
+        if (request.expectedAttendees() != null &&
+                resource.getCapacity() != null &&
+                request.expectedAttendees() > resource.getCapacity()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Expected attendees exceed resource capacity");
+        }
 
-		@SuppressWarnings("null")
-		BookingResponse result = toResponse(bookingRepository.save(booking));
-		return result;
-	}
+        boolean conflictExists = !bookingRepository.findConflicts(
+                request.resourceId(),
+                request.bookingDate(),
+                List.of(BookingStatus.PENDING, BookingStatus.APPROVED),
+                request.startTime(),
+                request.endTime()
+        ).isEmpty();
 
-	public List<BookingResponse> findAll(BookingStatus status) {
-		AuthenticatedUser user = accessGuard.currentUser();
-		List<BookingDocument> bookings = user.role() == UserRole.ADMIN
-				? (status == null ? bookingRepository.findAll() : bookingRepository.findByStatus(status))
-				: bookingRepository.findByRequesterId(user.userId());
+        if (conflictExists) {
+            throw new AppException(HttpStatus.CONFLICT, "Selected time slot overlaps with another booking");
+        }
 
-		return bookings.stream()
-				.filter(booking -> status == null || booking.getStatus() == status)
-				.map(this::toResponse)
-				.toList();
-	}
+        BookingDocument booking = BookingDocument.builder()
+                .resourceId(resource.getId())
+                .resourceName(resource.getName())
+                .requesterId(currentUser.userId())
+                .requesterName(currentUser.displayName())
+                .bookingDate(request.bookingDate())
+                .startTime(request.startTime())
+                .endTime(request.endTime())
+                .purpose(request.purpose())
+                .expectedAttendees(request.expectedAttendees())
+                .status(BookingStatus.PENDING)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
 
-	public BookingResponse review(String bookingId, ReviewBookingRequest request) {
-		accessGuard.requireAnyRole(UserRole.ADMIN);
-		BookingDocument booking = getDocument(bookingId);
-		if (booking.getStatus() != BookingStatus.PENDING) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "Only pending bookings can be reviewed.");
-		}
+        @SuppressWarnings("null")
+        BookingDocument saved = bookingRepository.save(booking);
+        return mapToResponse(saved);
+    }
 
-		String decision = request.decision().trim().toUpperCase();
-		if (!decision.equals(BookingStatus.APPROVED.name()) && !decision.equals(BookingStatus.REJECTED.name())) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "Decision must be APPROVED or REJECTED.");
-		}
+    public List<BookingResponse> list(String status, String bookingDate) {
+        AuthenticatedUser currentUser = accessGuard.currentUser();
+        boolean isAdmin = currentUser.role().name().equals("ADMIN");
 
-		booking.setStatus(BookingStatus.valueOf(decision));
-		booking.setDecisionReason(request.reason());
-		booking.setReviewedBy(accessGuard.currentUser().displayName());
-		booking.setReviewedAt(Instant.now());
-		booking.setUpdatedAt(Instant.now());
-		BookingDocument saved = bookingRepository.save(booking);
+        List<BookingDocument> bookings = isAdmin
+                ? bookingRepository.findAll()
+                : bookingRepository.findByRequesterId(currentUser.userId());
 
-		notificationService.createForUser(
-				saved.getRequesterId(),
-				"Booking %s".formatted(saved.getStatus().name().toLowerCase()),
-				"Your booking for %s on %s was %s.".formatted(
-						saved.getResourceName(),
-						saved.getBookingDate(),
-						saved.getStatus().name().toLowerCase()),
-				NotificationType.BOOKING_STATUS_CHANGED,
-				saved.getId());
+        Stream<BookingDocument> stream = bookings.stream();
 
-		return toResponse(saved);
-	}
+        if (status != null && !status.isBlank()) {
+            String normalized = status.trim().toUpperCase();
+            stream = stream.filter(b -> b.getStatus().name().equals(normalized));
+        }
 
-	public BookingResponse cancel(String bookingId) {
-		BookingDocument booking = getDocument(bookingId);
-		accessGuard.requireOwnerOrRole(booking.getRequesterId(), UserRole.ADMIN);
-		if (booking.getStatus() == BookingStatus.REJECTED || booking.getStatus() == BookingStatus.CANCELLED) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "This booking cannot be cancelled.");
-		}
+        if (bookingDate != null && !bookingDate.isBlank()) {
+            LocalDate selectedDate = LocalDate.parse(bookingDate);
+            stream = stream.filter(b -> selectedDate.equals(b.getBookingDate()));
+        }
 
-		booking.setStatus(BookingStatus.CANCELLED);
-		booking.setUpdatedAt(Instant.now());
-		return toResponse(bookingRepository.save(booking));
-	}
+        return stream
+                .sorted(Comparator.comparing(BookingDocument::getCreatedAt).reversed())
+                .map(this::mapToResponse)
+                .toList();
+    }
 
-	public BookingDocument getDocument(String bookingId) {
-			@SuppressWarnings("null")
-			BookingDocument booking = bookingRepository.findById(bookingId)
-					.orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Booking not found."));
-			return booking;
-	}
+    public BookingResponse review(String bookingId, ReviewBookingRequest request) {
+        accessGuard.requireAnyRole(com.vaas.paf.security.UserRole.ADMIN);
+        AuthenticatedUser currentUser = accessGuard.currentUser();
 
-	private void validateBookingRequest(CreateBookingRequest request, ResourceDocument resource) {
-		if (resource.getStatus() != ResourceStatus.ACTIVE) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "Bookings are allowed only for active resources.");
-		}
-		if (!request.startTime().isBefore(request.endTime())) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "Booking start time must be before end time.");
-		}
-		if (request.startTime().isBefore(resource.getAvailabilityStart()) || request.endTime().isAfter(resource.getAvailabilityEnd())) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "Booking must be within the resource availability window.");
-		}
-		if (request.expectedAttendees() > resource.getCapacity()) {
-			throw new AppException(HttpStatus.BAD_REQUEST, "Expected attendees exceed the resource capacity.");
-		}
+        @SuppressWarnings("null")
+        BookingDocument booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Booking not found"));
 
-		boolean hasConflict = !bookingRepository.findConflicts(
-				resource.getId(),
-				request.bookingDate(),
-				BLOCKING_STATUSES,
-				request.startTime(),
-				request.endTime()).isEmpty();
-		if (hasConflict) {
-			throw new AppException(HttpStatus.CONFLICT, "The selected time range overlaps with an existing booking.");
-		}
-	}
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Only pending bookings can be reviewed");
+        }
 
-	private BookingResponse toResponse(BookingDocument booking) {
-		return new BookingResponse(
-				booking.getId(),
-				booking.getResourceId(),
-				booking.getResourceName(),
-				booking.getRequesterId(),
-				booking.getRequesterName(),
-				booking.getBookingDate(),
-				booking.getStartTime(),
-				booking.getEndTime(),
-				booking.getPurpose(),
-				booking.getExpectedAttendees(),
-				booking.getStatus(),
-				booking.getDecisionReason(),
-				booking.getReviewedBy(),
-				booking.getReviewedAt(),
-				booking.getCreatedAt(),
-				booking.getUpdatedAt());
-	}
+        String decision = request.decision().trim().toUpperCase();
+
+        if (!decision.equals("APPROVED") && !decision.equals("REJECTED")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Decision must be APPROVED or REJECTED");
+        }
+
+        if (decision.equals("REJECTED") &&
+                (request.reason() == null || request.reason().trim().isEmpty())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Reason is required when rejecting a booking");
+        }
+
+        booking.setStatus(BookingStatus.valueOf(decision));
+        booking.setDecisionReason(request.reason() == null ? null : request.reason().trim());
+        booking.setReviewedBy(currentUser.displayName());
+        booking.setReviewedAt(Instant.now());
+        booking.setUpdatedAt(Instant.now());
+
+        BookingDocument saved = bookingRepository.save(booking);
+        return mapToResponse(saved);
+    }
+
+    public BookingResponse cancel(String bookingId) {
+        AuthenticatedUser currentUser = accessGuard.currentUser();
+        
+        @SuppressWarnings("null")
+        BookingDocument booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        boolean isAdmin = currentUser.role().name().equals("ADMIN");
+        boolean isOwner = booking.getRequesterId().equals(currentUser.userId());
+
+        if (!isAdmin && !isOwner) {
+            throw new AppException(HttpStatus.FORBIDDEN, "You are not allowed to cancel this booking");
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING &&
+                booking.getStatus() != BookingStatus.APPROVED) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Only pending or approved bookings can be cancelled");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(Instant.now());
+
+        BookingDocument saved = bookingRepository.save(booking);
+        return mapToResponse(saved);
+    }
+
+    public Map<String, Long> getSummary() {
+        AuthenticatedUser currentUser = accessGuard.currentUser();
+        boolean isAdmin = currentUser.role().name().equals("ADMIN");
+
+        List<BookingDocument> bookings = isAdmin
+                ? bookingRepository.findAll()
+                : bookingRepository.findByRequesterId(currentUser.userId());
+
+        Map<String, Long> summary = new LinkedHashMap<>();
+        summary.put("total", (long) bookings.size());
+        summary.put("pending", bookings.stream().filter(b -> b.getStatus() == BookingStatus.PENDING).count());
+        summary.put("approved", bookings.stream().filter(b -> b.getStatus() == BookingStatus.APPROVED).count());
+        summary.put("rejected", bookings.stream().filter(b -> b.getStatus() == BookingStatus.REJECTED).count());
+        summary.put("cancelled", bookings.stream().filter(b -> b.getStatus() == BookingStatus.CANCELLED).count());
+
+        return summary;
+    }
+
+    private BookingResponse mapToResponse(BookingDocument booking) {
+        return new BookingResponse(
+                booking.getId(),
+                booking.getResourceId(),
+                booking.getResourceName(),
+                booking.getRequesterId(),
+                booking.getRequesterName(),
+                booking.getBookingDate(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                booking.getPurpose(),
+                booking.getExpectedAttendees(),
+                booking.getStatus(),
+                booking.getDecisionReason(),
+                booking.getReviewedBy(),
+                booking.getReviewedAt(),
+                booking.getCreatedAt(),
+                booking.getUpdatedAt()
+        );
+    }
 }

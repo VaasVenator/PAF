@@ -1583,6 +1583,75 @@ code {
   font-size: 0.95rem;
 }
 
+.booking-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.summary-card {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.summary-card h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.95rem;
+  color: rgba(248, 243, 232, 0.75);
+}
+
+.summary-card p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.admin-bookings-toolbar {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.admin-bookings-filter {
+  min-width: 200px;
+}
+
+.admin-booking-card {
+  margin-bottom: 1rem;
+}
+
+.admin-booking-actions {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-booking-button-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-booking-cancel-row {
+  margin-top: 1rem;
+}
+
+.booking-review-textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 0.92rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8f3e8;
+  resize: vertical;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .header-container {

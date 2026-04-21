@@ -22,7 +22,8 @@ export default function LoginPage() {
     try {
       await login({
         studentId: studentId.trim().toUpperCase(),
-        password
+        password,
+        loginMode
       });
       navigate(redirectPath, { replace: true });
     } catch (requestError) {

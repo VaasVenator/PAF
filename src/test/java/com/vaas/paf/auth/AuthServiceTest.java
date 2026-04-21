@@ -67,7 +67,7 @@ class AuthServiceTest {
 
 		AppException exception = assertThrows(
 				AppException.class,
-				() -> authService.login(new LoginRequest("IT12345678", "wrongpass")));
+				() -> authService.login(new LoginRequest("IT12345678", "wrongpass", "student")));
 		assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
 	}
 

@@ -65,11 +65,30 @@ public class AuthService {
 	}
 
 	public AuthUserResponse login(LoginRequest request) {
-		UserDocument user = userRepository.findByStudentId(request.studentId().trim().toUpperCase())
-				.orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID or password."));
+		String studentId = request.studentId().trim().toUpperCase();
+		String loginMode = request.loginMode() != null ? request.loginMode().toLowerCase() : "student";
+
+		// Validate ID format based on login mode
+		if ("student".equals(loginMode) && !studentId.startsWith("IT")) {
+			throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID or password.");
+		}
+
+		if ("admin".equals(loginMode) && !studentId.startsWith("STF")) {
+			throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid admin ID or password.");
+		}
+
+		UserDocument user = userRepository.findByStudentId(studentId)
+				.orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, 
+					"admin".equals(loginMode) ? "Invalid admin ID or password." : "Invalid student ID or password."));
 
 		if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-			throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid student ID or password.");
+			throw new AppException(HttpStatus.UNAUTHORIZED, 
+				"admin".equals(loginMode) ? "Invalid admin ID or password." : "Invalid student ID or password.");
+		}
+
+		// Validate admin login mode - only ADMIN and TECHNICIAN roles can use admin login
+		if ("admin".equals(loginMode) && user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.TECHNICIAN) {
+			throw new AppException(HttpStatus.FORBIDDEN, "Admin login requires administrator credentials. Please use Student Login instead.");
 		}
 
 		return toResponse(user);

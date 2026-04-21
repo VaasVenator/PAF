@@ -1,3 +1,4 @@
+// frontend/src/pages/AdminBookingsPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import StatusBadge from "../components/StatusBadge";
@@ -8,18 +9,31 @@ export default function AdminBookingsPage() {
   const { user } = useAuth();
 
   const [bookings, setBookings] = useState([]);
+  const [summary, setSummary] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    cancelled: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [reviewReason, setReviewReason] = useState({});
 
   const endpoint = useMemo(() => {
-    return statusFilter ? `/api/bookings?status=${statusFilter}` : "/api/bookings";
-  }, [statusFilter]);
+    const params = new URLSearchParams();
+    if (statusFilter) params.append("status", statusFilter);
+    if (dateFilter) params.append("bookingDate", dateFilter);
+    const query = params.toString();
+    return query ? `/api/bookings?${query}` : "/api/bookings";
+  }, [statusFilter, dateFilter]);
 
   useEffect(() => {
     loadBookings();
+    loadSummary();
   }, [endpoint]);
 
   async function loadBookings() {
@@ -35,10 +49,24 @@ export default function AdminBookingsPage() {
     }
   }
 
+  async function loadSummary() {
+    try {
+      const payload = await apiGet("/api/bookings/summary", user);
+      setSummary(payload);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function handleReview(bookingId, decision) {
     try {
       setError("");
       setMessage("");
+
+      if (decision === "REJECTED" && !(reviewReason[bookingId] ?? "").trim()) {
+        setError("Reason is required when rejecting a booking.");
+        return;
+      }
 
       await apiPatch(
         `/api/bookings/${bookingId}/review`,
@@ -51,6 +79,7 @@ export default function AdminBookingsPage() {
 
       setMessage(`Booking ${decision.toLowerCase()} successfully.`);
       await loadBookings();
+      await loadSummary();
     } catch (err) {
       setError(err.message);
     }
@@ -68,6 +97,7 @@ export default function AdminBookingsPage() {
 
       setMessage("Booking cancelled successfully.");
       await loadBookings();
+      await loadSummary();
     } catch (err) {
       setError(err.message);
     }
@@ -78,22 +108,36 @@ export default function AdminBookingsPage() {
       <PageHeader
         eyebrow=""
         title="Admin booking approvals"
-        description="Review pending booking requests, approve or reject them, and manage booking status."
+        description="Review booking requests, apply filters, approve or reject with reasons, and manage booking status."
       />
+
+      <div className="booking-summary-grid">
+        <div className="summary-card"><h4>Total</h4><p>{summary.total}</p></div>
+        <div className="summary-card"><h4>Pending</h4><p>{summary.pending}</p></div>
+        <div className="summary-card"><h4>Approved</h4><p>{summary.approved}</p></div>
+        <div className="summary-card"><h4>Rejected</h4><p>{summary.rejected}</p></div>
+        <div className="summary-card"><h4>Cancelled</h4><p>{summary.cancelled}</p></div>
+      </div>
 
       <div className="admin-bookings-toolbar">
         <label className="field admin-bookings-filter">
           <span>Status filter</span>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All</option>
             <option value="PENDING">Pending</option>
             <option value="APPROVED">Approved</option>
             <option value="REJECTED">Rejected</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
+        </label>
+
+        <label className="field admin-bookings-filter">
+          <span>Date filter</span>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+          />
         </label>
       </div>
 
@@ -111,9 +155,7 @@ export default function AdminBookingsPage() {
             <div className="stack-head">
               <div>
                 <h3>{booking.resourceName}</h3>
-                <p>
-                  {booking.bookingDate} | {booking.startTime} - {booking.endTime}
-                </p>
+                <p>{booking.bookingDate} | {booking.startTime} - {booking.endTime}</p>
               </div>
               <StatusBadge value={booking.status} />
             </div>
@@ -138,7 +180,7 @@ export default function AdminBookingsPage() {
                   <span>Review reason</span>
                   <textarea
                     className="booking-review-textarea"
-                    placeholder="Optional reason for approval or rejection"
+                    placeholder="Required for rejection, optional for approval"
                     value={reviewReason[booking.id] ?? ""}
                     onChange={(event) =>
                       setReviewReason((current) => ({
