@@ -22,6 +22,7 @@ export default function AdminBookingsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [reviewReason, setReviewReason] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams();
@@ -62,9 +63,16 @@ export default function AdminBookingsPage() {
     try {
       setError("");
       setMessage("");
+      setFieldErrors((current) => ({
+        ...current,
+        [bookingId]: ""
+      }));
 
       if (decision === "REJECTED" && !(reviewReason[bookingId] ?? "").trim()) {
-        setError("Reason is required when rejecting a booking.");
+        setFieldErrors((current) => ({
+          ...current,
+          [bookingId]: "Reason is required when rejecting a booking."
+        }));
         return;
       }
 
@@ -189,6 +197,9 @@ export default function AdminBookingsPage() {
                       }))
                     }
                   />
+                  {fieldErrors[booking.id] ? (
+                    <p className="field-error">{fieldErrors[booking.id]}</p>
+                  ) : null}
                 </label>
 
                 <div className="admin-booking-button-row">
