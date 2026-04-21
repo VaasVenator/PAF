@@ -19,7 +19,6 @@ import com.vaas.paf.booking.model.BookingDocument;
 import com.vaas.paf.booking.repo.BookingRepository;
 import com.vaas.paf.booking.service.BookingService;
 import com.vaas.paf.common.AppException;
-import com.vaas.paf.notification.service.NotificationService;
 import com.vaas.paf.resource.model.ResourceDocument;
 import com.vaas.paf.resource.model.ResourceStatus;
 import com.vaas.paf.resource.model.ResourceType;
@@ -37,9 +36,6 @@ class BookingServiceTest {
 	private ResourceService resourceService;
 
 	@Mock
-	private NotificationService notificationService;
-
-	@Mock
 	private AccessGuard accessGuard;
 
 	private BookingService bookingService;
@@ -47,7 +43,7 @@ class BookingServiceTest {
 	@BeforeEach
 	void setUp() {
 		MockitoAnnotations.openMocks(this);
-		bookingService = new BookingService(bookingRepository, resourceService, notificationService, accessGuard);
+		bookingService = new BookingService(bookingRepository, resourceService, accessGuard);
 		when(accessGuard.currentUser()).thenReturn(new AuthenticatedUser("user-1", "Demo User", UserRole.USER));
 	}
 

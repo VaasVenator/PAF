@@ -8,7 +8,6 @@ import com.vaas.paf.booking.model.BookingDocument;
 import com.vaas.paf.booking.model.BookingStatus;
 import com.vaas.paf.booking.repo.BookingRepository;
 import com.vaas.paf.common.AppException;
-import com.vaas.paf.notification.service.NotificationService;
 import com.vaas.paf.resource.model.ResourceDocument;
 import com.vaas.paf.resource.model.ResourceStatus;
 import com.vaas.paf.resource.service.ResourceService;
