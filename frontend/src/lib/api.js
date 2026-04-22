@@ -46,4 +46,30 @@ export async function apiPost(path, body, user) {
   return parseResponse(response);
 }
 
+export async function apiPatch(path, body, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PATCH",
+    headers: buildHeaders(user),
+    body: JSON.stringify(body)
+  });
+  return parseResponse(response);
+}
+
+export async function apiPut(path, body, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PUT",
+    headers: buildHeaders(user),
+    body: JSON.stringify(body)
+  });
+  return parseResponse(response);
+}
+
+export async function apiDelete(path, user) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "DELETE",
+    headers: buildHeaders(user)
+  });
+  return parseResponse(response);
+}
+
 export { API_BASE_URL };

@@ -6,6 +6,8 @@ import DashboardPage from "./pages/DashboardPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import BookingsPage from "./pages/BookingsPage";
 import TicketsPage from "./pages/TicketsPage";
+import TicketCreatePage from "./pages/TicketCreatePage";
+import TicketDetailPage from "./pages/TicketDetailPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -49,6 +51,7 @@ export default function App() {
           <p className="brand-copy">
             Facilities, bookings, maintenance, and notifications in one place.
           </p>
+
           {user ? (
             <div className="sidebar-user">
               <strong>{user.displayName}</strong>
@@ -101,6 +104,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/resources"
             element={
@@ -109,6 +113,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/bookings"
             element={
@@ -117,6 +122,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/tickets"
             element={
@@ -125,6 +131,25 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/tickets/new"
+            element={
+              <ProtectedRoute>
+                <TicketCreatePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/tickets/:ticketId"
+            element={
+              <ProtectedRoute>
+                <TicketDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/notifications"
             element={
@@ -133,6 +158,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
         </Routes>
