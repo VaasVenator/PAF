@@ -1,6 +1,7 @@
 // src/main/java/com/vaas/paf/booking/controller/BookingController.java
 package com.vaas.paf.booking.controller;
 
+import com.vaas.paf.booking.dto.BookingAnalyticsResponse;
 import com.vaas.paf.booking.dto.CreateBookingRequest;
 import com.vaas.paf.booking.dto.ReviewBookingRequest;
 import com.vaas.paf.booking.dto.BookingResponse;
@@ -55,5 +56,10 @@ public class BookingController {
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Long>> getBookingSummary() {
         return ResponseEntity.ok(bookingService.getSummary());
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<BookingAnalyticsResponse> getAnalytics() {
+        return ResponseEntity.ok(bookingService.getAnalytics());
     }
 }

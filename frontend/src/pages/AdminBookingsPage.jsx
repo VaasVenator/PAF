@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import StatusBadge from "../components/StatusBadge";
+import AdminAnalyticsDashboard from "./AdminAnalyticsDashboard";
 import { useAuth } from "../auth/AuthContext";
 import { apiGet, apiPatch } from "../lib/api";
 
@@ -118,6 +119,8 @@ export default function AdminBookingsPage() {
         title="Admin booking approvals"
         description="Review booking requests, apply filters, approve or reject with reasons, and manage booking status."
       />
+
+      <AdminAnalyticsDashboard />
 
       <div className="booking-summary-grid">
         <div className="summary-card"><h4>Total</h4><p>{summary.total}</p></div>

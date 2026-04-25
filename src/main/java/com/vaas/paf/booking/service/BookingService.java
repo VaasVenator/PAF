@@ -1,6 +1,7 @@
 // src/main/java/com/vaas/paf/booking/service/BookingService.java
 package com.vaas.paf.booking.service;
 
+import com.vaas.paf.booking.dto.BookingAnalyticsResponse;
 import com.vaas.paf.booking.dto.BookingResponse;
 import com.vaas.paf.booking.dto.CreateBookingRequest;
 import com.vaas.paf.booking.dto.ReviewBookingRequest;
@@ -187,6 +188,30 @@ public class BookingService {
         summary.put("cancelled", bookings.stream().filter(b -> b.getStatus() == BookingStatus.CANCELLED).count());
 
         return summary;
+    }
+
+    public BookingAnalyticsResponse getAnalytics() {
+        accessGuard.requireAnyRole(com.vaas.paf.security.UserRole.ADMIN);
+        
+        List<BookingDocument> allBookings = bookingRepository.findAll();
+        
+        long total = allBookings.size();
+        long pending = allBookings.stream().filter(b -> b.getStatus() == BookingStatus.PENDING).count();
+        long approved = allBookings.stream().filter(b -> b.getStatus() == BookingStatus.APPROVED).count();
+        long rejected = allBookings.stream().filter(b -> b.getStatus() == BookingStatus.REJECTED).count();
+        long cancelled = allBookings.stream().filter(b -> b.getStatus() == BookingStatus.CANCELLED).count();
+        
+        List<BookingAnalyticsResponse.DailyBookingStats> bookingsByDay = allBookings.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        BookingDocument::getBookingDate,
+                        java.util.stream.Collectors.counting()
+                ))
+                .entrySet().stream()
+                .map(e -> new BookingAnalyticsResponse.DailyBookingStats(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(BookingAnalyticsResponse.DailyBookingStats::date))
+                .toList();
+        
+        return new BookingAnalyticsResponse(total, pending, approved, rejected, cancelled, bookingsByDay);
     }
 
     private BookingResponse mapToResponse(BookingDocument booking) {

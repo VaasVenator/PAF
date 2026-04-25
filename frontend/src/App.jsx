@@ -29,7 +29,7 @@ export default function App() {
   const navItems = [
     { to: "/dashboard", label: "Overview" },
     { to: "/resources", label: "Resources" },
-    { to: "/bookings", label: "Bookings" },
+    ...(user?.role !== "ADMIN" ? [{ to: "/bookings", label: "Bookings" }] : []),
     { to: "/tickets", label: "Tickets" },
     { to: "/notifications", label: "Notifications" },
     ...(user?.role === "ADMIN"
@@ -144,9 +144,13 @@ export default function App() {
           <Route
             path="/bookings"
             element={
-              <ProtectedRoute>
-                <BookingsPage />
-              </ProtectedRoute>
+              user?.role !== "ADMIN" ? (
+                <ProtectedRoute>
+                  <BookingsPage />
+                </ProtectedRoute>
+              ) : (
+                <Navigate to="/admin/bookings" replace />
+              )
             }
           />
           <Route

@@ -144,7 +144,7 @@ public class AuthService {
 
 	public void sendPasswordResetCode(String studentId, String email) {
 		String normalizedId = studentId.trim().toUpperCase();
-		UserDocument user = userRepository.findByStudentIdIgnoreCase(normalizedId)
+		UserDocument user = userRepository.findByStudentId(normalizedId)
 				.orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User with this student ID not found."));
 
 		if (!user.getEmail().equalsIgnoreCase(email.trim())) {
@@ -166,7 +166,7 @@ public class AuthService {
 
 	public void resetPassword(String studentId, String email, String resetCode, String newPassword) {
 		String normalizedId = studentId.trim().toUpperCase();
-		UserDocument user = userRepository.findByStudentIdIgnoreCase(normalizedId)
+		UserDocument user = userRepository.findByStudentId(normalizedId)
 				.orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User with this student ID not found."));
 
 		if (!user.getEmail().equalsIgnoreCase(email.trim())) {
