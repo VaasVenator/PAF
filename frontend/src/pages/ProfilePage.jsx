@@ -85,14 +85,14 @@ export default function ProfilePage() {
           <button type="button" className="profile-avatar" aria-label="Profile avatar">
             {user?.firstName?.[0] ?? "U"}
           </button>
-          <div>
+          <div className="profile-identity">
             <h3>{user?.displayName}</h3>
             <p>{user?.studentId ?? user?.email ?? "No student ID linked"}</p>
             <p>{user?.role}</p>
           </div>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form profile-form" onSubmit={handleSubmit}>
           <div className="field-grid">
             <label className="field">
               <span>ID number</span>

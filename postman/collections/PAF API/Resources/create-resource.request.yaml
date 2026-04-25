@@ -1,0 +1,23 @@
+$kind: http-request
+name: 'Create Resource'
+method: POST
+url: '{{baseUrl}}/api/resources'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Main Lecture Hall A",
+      "type": "LECTURE_HALL",
+      "capacity": 120,
+      "location": "Building A - Floor 2",
+      "availabilityStart": "08:00:00",
+      "availabilityEnd": "18:00:00",
+      "status": "ACTIVE",
+      "amenities": ["Projector", "Air Conditioning", "WiFi"]
+    }

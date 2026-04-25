@@ -1,0 +1,17 @@
+$kind: http-request
+name: 'Review Booking'
+method: PATCH
+url: '{{baseUrl}}/api/bookings/{{bookingId}}/review'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "decision": "APPROVED",
+      "reason": "Resource available for requested slot"
+    }

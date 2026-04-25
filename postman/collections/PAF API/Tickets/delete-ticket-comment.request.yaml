@@ -1,0 +1,8 @@
+$kind: http-request
+name: 'Delete Ticket Comment'
+method: DELETE
+url: '{{baseUrl}}/api/tickets/{{ticketId}}/comments/{{commentId}}'
+order: 9000
+headers:
+  - key: Accept
+    value: application/json

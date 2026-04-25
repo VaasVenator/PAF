@@ -1,0 +1,16 @@
+$kind: http-request
+name: 'Update Ticket Comment'
+method: PUT
+url: '{{baseUrl}}/api/tickets/{{ticketId}}/comments/{{commentId}}'
+order: 8000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "message": "Investigation update: replaced faulty cable."
+    }

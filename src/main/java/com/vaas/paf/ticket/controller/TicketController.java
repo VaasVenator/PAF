@@ -20,6 +20,7 @@ import com.vaas.paf.ticket.dto.CreateTicketRequest;
 import com.vaas.paf.ticket.dto.TicketCommentResponse;
 import com.vaas.paf.ticket.dto.TicketResponse;
 import com.vaas.paf.ticket.dto.UpdateCommentRequest;
+import com.vaas.paf.ticket.dto.UpdateTicketRequest;
 import com.vaas.paf.ticket.dto.UpdateTicketStatusRequest;
 import com.vaas.paf.ticket.service.TicketCommentService;
 import com.vaas.paf.ticket.service.TicketService;
@@ -66,6 +67,19 @@ public class TicketController {
 			@PathVariable String ticketId,
 			@Valid @RequestBody UpdateTicketStatusRequest request) {
 		return ticketService.updateStatus(ticketId, request);
+	}
+
+	@PutMapping("/{ticketId}")
+	public TicketResponse update(
+			@PathVariable String ticketId,
+			@Valid @RequestBody UpdateTicketRequest request) {
+		return ticketService.update(ticketId, request);
+	}
+
+	@DeleteMapping("/{ticketId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(@PathVariable String ticketId) {
+		ticketService.delete(ticketId);
 	}
 
 	@GetMapping("/{ticketId}/comments")

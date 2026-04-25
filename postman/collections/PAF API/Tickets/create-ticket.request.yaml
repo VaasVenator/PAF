@@ -1,0 +1,22 @@
+$kind: http-request
+name: 'Create Ticket'
+method: POST
+url: '{{baseUrl}}/api/tickets'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "resourceId": "{{resourceId}}",
+      "location": "Building B - Lab 3",
+      "category": "NETWORK",
+      "description": "Internet connectivity is intermittent in the lab.",
+      "priority": "HIGH",
+      "preferredContact": "it23123456@my.sliit.lk",
+      "attachmentUrls": ["https://example.com/screenshot1.png"]
+    }

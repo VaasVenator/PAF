@@ -7,11 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.vaas.paf.common.AppException;
+import com.vaas.paf.notification.dto.CreateNotificationRequest;
 import com.vaas.paf.notification.dto.NotificationResponse;
+import com.vaas.paf.notification.dto.UpdateNotificationRequest;
 import com.vaas.paf.notification.model.NotificationDocument;
 import com.vaas.paf.notification.model.NotificationType;
 import com.vaas.paf.notification.repo.NotificationRepository;
 import com.vaas.paf.security.AccessGuard;
+import com.vaas.paf.security.UserRole;
 
 @Service
 public class NotificationService {
@@ -54,6 +57,42 @@ public class NotificationService {
 		@SuppressWarnings("null")
 		NotificationResponse result = toResponse(notificationRepository.save(notification));
 		return result;
+	}
+
+	public NotificationResponse create(CreateNotificationRequest request) {
+		accessGuard.requireAnyRole(UserRole.ADMIN);
+		NotificationDocument notification = NotificationDocument.builder()
+				.userId(request.userId())
+				.title(request.title())
+				.message(request.message())
+				.type(request.type())
+				.referenceId(request.referenceId())
+				.read(false)
+				.createdAt(Instant.now())
+				.build();
+		@SuppressWarnings("null")
+		NotificationResponse result = toResponse(notificationRepository.save(notification));
+		return result;
+	}
+
+	public NotificationResponse update(String notificationId, UpdateNotificationRequest request) {
+		accessGuard.requireAnyRole(UserRole.ADMIN);
+		@SuppressWarnings("null")
+		NotificationDocument notification = notificationRepository.findById(notificationId)
+				.orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Notification not found."));
+		notification.setTitle(request.title());
+		notification.setMessage(request.message());
+		@SuppressWarnings("null")
+		NotificationResponse result = toResponse(notificationRepository.save(notification));
+		return result;
+	}
+
+	public void delete(String notificationId) {
+		@SuppressWarnings("null")
+		NotificationDocument notification = notificationRepository.findById(notificationId)
+				.orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Notification not found."));
+		accessGuard.requireOwnerOrRole(notification.getUserId(), UserRole.ADMIN);
+		notificationRepository.delete(notification);
 	}
 
 	private NotificationResponse toResponse(NotificationDocument notification) {

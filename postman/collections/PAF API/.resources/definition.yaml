@@ -1,0 +1,16 @@
+$kind: collection
+name: 'PAF API'
+description: 'Local Postman collection for the discovered Spring Boot HTTP API endpoints.'
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8080'
+  - key: resourceId
+    value: '1'
+  - key: bookingId
+    value: '1'
+  - key: ticketId
+    value: '1'
+  - key: commentId
+    value: '1'
+  - key: notificationId
+    value: '1'

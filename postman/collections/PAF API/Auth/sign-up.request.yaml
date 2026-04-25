@@ -1,0 +1,20 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/auth/signup'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "studentId": "IT23123456",
+      "username": "sahanvaas",
+      "firstName": "Sahan",
+      "lastName": "Vaas",
+      "password": "Password123",
+      "confirmPassword": "Password123"
+    }

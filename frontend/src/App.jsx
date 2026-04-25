@@ -1,28 +1,45 @@
-import { useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import DashboardPage from "./pages/DashboardPage";
-import ResourcesPage from "./pages/ResourcesPage";
-import BookingsPage from "./pages/BookingsPage";
-import AdminBookingsPage from "./pages/AdminBookingsPage";
-import TicketsPage from "./pages/TicketsPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import ProfilePage from "./pages/ProfilePage";
-import OAuthSuccessPage from "./pages/OAuthSuccessPage";
-import HomePage from "./pages/HomePage";
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
+
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ResourcesPage = lazy(() => import("./pages/ResourcesPage"));
+const BookingsPage = lazy(() => import("./pages/BookingsPage"));
+const AdminBookingsPage = lazy(() => import("./pages/AdminBookingsPage"));
+const TicketsPage = lazy(() => import("./pages/TicketsPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const OAuthSuccessPage = lazy(() => import("./pages/OAuthSuccessPage"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const ContactPage = lazy(() => import("./pages/ContactPage"));
 
 export default function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { user, loading, logout } = useAuth();
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem("paf:sidebar-open");
+    if (saved !== null) {
+      setSidebarOpen(saved === "1");
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("paf:sidebar-open", sidebarOpen ? "1" : "0");
+  }, [sidebarOpen]);
+
   if (loading) {
-    return <div className="loading-screen">Loading...</div>;
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" aria-hidden="true" />
+        <p>Loading your workspace...</p>
+      </div>
+    );
   }
 
   const navItems = [
@@ -49,15 +66,17 @@ export default function App() {
   // Show public pages (including auth pages) if not authenticated
   if (!user && (isAuthPage || isPublicPage)) {
     return (
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/oauth-success" element={<OAuthSuccessPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<div className="route-loader">Loading page...</div>}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/oauth-success" element={<OAuthSuccessPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -68,6 +87,15 @@ export default function App() {
 
   return (
     <div className={`shell ${sidebarOpen ? "shell-sidebar-open" : "shell-sidebar-closed"}`}>
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Close menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
         <div className="brand">
           <h1>Smart Campus Hub</h1>
@@ -95,18 +123,15 @@ export default function App() {
             </NavLink>
           ))}
         </nav>
-
-        <button type="button" className="logout-button" onClick={logout}>
-          Log out
-        </button>
       </aside>
 
-      <main className="content">
+      <main className="content" aria-live="polite">
         <div className="content-toolbar">
           <button
             type="button"
             className="sidebar-toggle"
             onClick={() => setSidebarOpen((current) => !current)}
+            aria-label={sidebarOpen ? "Hide navigation menu" : "Show navigation menu"}
           >
             {sidebarOpen ? "Hide menu" : "Menu"}
           </button>
@@ -121,68 +146,70 @@ export default function App() {
           </div>
         </div>
 
-        <Routes>
-          <Route
-            path="/dashboard"
-            element={user ? <DashboardPage /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/"
-            element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/resources"
-            element={
-              <ProtectedRoute>
-                <ResourcesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bookings"
-            element={
-              <ProtectedRoute>
-                <BookingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/bookings"
-            element={
-              <ProtectedRoute>
-                <AdminBookingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tickets"
-            element={
-              <ProtectedRoute>
-                <TicketsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/oauth-success" element={<OAuthSuccessPage />} />
-          <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
-        </Routes>
+        <Suspense fallback={<div className="route-loader">Loading page...</div>}>
+          <Routes>
+            <Route
+              path="/dashboard"
+              element={user ? <DashboardPage /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/"
+              element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/resources"
+              element={
+                <ProtectedRoute>
+                  <ResourcesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings"
+              element={
+                <ProtectedRoute>
+                  <BookingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/bookings"
+              element={
+                <ProtectedRoute>
+                  <AdminBookingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tickets"
+              element={
+                <ProtectedRoute>
+                  <TicketsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/oauth-success" element={<OAuthSuccessPage />} />
+            <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );

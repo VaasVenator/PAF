@@ -1,0 +1,11 @@
+$kind: http-request
+name: 'List Bookings'
+method: GET
+url: '{{baseUrl}}/api/bookings'
+order: 2000
+headers:
+  - key: Accept
+    value: application/json
+queryParams:
+  - key: status
+    value: PENDING

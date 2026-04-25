@@ -1,5 +1,11 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8081";
+  (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const DEFAULT_TIMEOUT_MS = 15000;
+
+function buildUrl(path) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}` || normalizedPath;
+}
 
 function buildHeaders(user, extraHeaders = {}) {
   const headers = {
@@ -34,51 +40,65 @@ async function parseResponse(response) {
   return payload;
 }
 
+async function request(path, { method = "GET", body, user, options = {} } = {}) {
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(buildUrl(path), {
+      method,
+      headers: buildHeaders(user, options.headers),
+      body,
+      credentials: options.credentials,
+      signal: controller.signal
+    });
+    return parseResponse(response);
+  } catch (error) {
+    const baseTarget = API_BASE_URL || "same-origin /api proxy";
+    const baseMessage = `Unable to reach backend via ${baseTarget}. Ensure the backend is running and the dev proxy or API base URL is configured correctly.`;
+    if (error?.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms. ${baseMessage}`);
+    }
+    throw new Error(baseMessage);
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export async function apiGet(path, user, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: buildHeaders(user, options.headers),
-    credentials: options.credentials
-  });
-  return parseResponse(response);
+  return request(path, { method: "GET", user, options });
 }
 
 export async function apiPost(path, body, user, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  return request(path, {
     method: "POST",
-    headers: buildHeaders(user, options.headers),
     body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: options.credentials
+    user,
+    options
   });
-  return parseResponse(response);
 }
 
 export async function apiPut(path, body, user, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  return request(path, {
     method: "PUT",
-    headers: buildHeaders(user, options.headers),
     body: JSON.stringify(body),
-    credentials: options.credentials
+    user,
+    options
   });
-  return parseResponse(response);
 }
 
 export async function apiDelete(path, user, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "DELETE",
-    headers: buildHeaders(user, options.headers),
-    credentials: options.credentials
-  });
-  return parseResponse(response);
+  return request(path, { method: "DELETE", user, options });
 }
 
 export async function apiPatch(path, body, user, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  return request(path, {
     method: "PATCH",
-    headers: buildHeaders(user, options.headers),
     body: JSON.stringify(body),
-    credentials: options.credentials
+    user,
+    options
   });
-  return parseResponse(response);
 }
 
 export { API_BASE_URL };

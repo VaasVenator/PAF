@@ -1,0 +1,8 @@
+$kind: http-request
+name: 'List Tickets'
+method: GET
+url: '{{baseUrl}}/api/tickets'
+order: 2000
+headers:
+  - key: Accept
+    value: application/json

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.vaas.paf.booking.dto.BookingResponse;
 import com.vaas.paf.booking.dto.CreateBookingRequest;
 import com.vaas.paf.booking.dto.ReviewBookingRequest;
+import com.vaas.paf.booking.dto.UpdateBookingRequest;
 import com.vaas.paf.booking.model.BookingDocument;
 import com.vaas.paf.booking.model.BookingStatus;
 import com.vaas.paf.booking.repo.BookingRepository;
@@ -124,6 +125,56 @@ public class BookingService {
 		booking.setStatus(BookingStatus.CANCELLED);
 		booking.setUpdatedAt(Instant.now());
 		return toResponse(bookingRepository.save(booking));
+	}
+
+	public BookingResponse update(String bookingId, UpdateBookingRequest request) {
+		BookingDocument booking = getDocument(bookingId);
+		accessGuard.requireOwnerOrRole(booking.getRequesterId(), UserRole.ADMIN);
+		
+		if (booking.getStatus() != BookingStatus.PENDING) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Only pending bookings can be updated.");
+		}
+
+		ResourceDocument resource = resourceService.getDocument(booking.getResourceId());
+
+		if (!request.startTime().isBefore(request.endTime())) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Booking start time must be before end time.");
+		}
+		if (request.startTime().isBefore(resource.getAvailabilityStart()) || request.endTime().isAfter(resource.getAvailabilityEnd())) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Booking must be within the resource availability window.");
+		}
+		if (request.expectedAttendees() > resource.getCapacity()) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Expected attendees exceed the resource capacity.");
+		}
+
+		boolean hasConflict = bookingRepository.findConflicts(
+				resource.getId(),
+				request.bookingDate(),
+				BLOCKING_STATUSES,
+				request.startTime(),
+				request.endTime()).stream().anyMatch(b -> !b.getId().equals(bookingId));
+				
+		if (hasConflict) {
+			throw new AppException(HttpStatus.CONFLICT, "The selected time range overlaps with an existing booking.");
+		}
+
+		booking.setBookingDate(request.bookingDate());
+		booking.setStartTime(request.startTime());
+		booking.setEndTime(request.endTime());
+		booking.setPurpose(request.purpose());
+		booking.setExpectedAttendees(request.expectedAttendees());
+		booking.setUpdatedAt(Instant.now());
+
+		return toResponse(bookingRepository.save(booking));
+	}
+
+	public void delete(String bookingId) {
+		BookingDocument booking = getDocument(bookingId);
+		accessGuard.requireOwnerOrRole(booking.getRequesterId(), UserRole.ADMIN);
+		if (booking.getStatus() != BookingStatus.PENDING) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Only pending bookings can be deleted.");
+		}
+		bookingRepository.delete(booking);
 	}
 
 	public BookingDocument getDocument(String bookingId) {

@@ -1,0 +1,23 @@
+$kind: http-request
+name: 'Update Resource'
+method: PUT
+url: '{{baseUrl}}/api/resources/{{resourceId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Main Lecture Hall A - Updated",
+      "type": "LECTURE_HALL",
+      "capacity": 150,
+      "location": "Building A - Floor 2",
+      "availabilityStart": "08:00:00",
+      "availabilityEnd": "20:00:00",
+      "status": "ACTIVE",
+      "amenities": ["Projector", "Air Conditioning", "WiFi", "Smart Board"]
+    }

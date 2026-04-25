@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import PageHeader from "../components/PageHeader";
 import StatusBadge from "../components/StatusBadge";
-import { apiGet, apiPatch, apiPost } from "../lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "../lib/api";
 
 function getToday() {
   return new Date().toISOString().split("T")[0];
@@ -34,6 +34,7 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [form, setForm] = useState(buildInitialForm());
   const [reviewReason, setReviewReason] = useState({});
+  const [editingBookingId, setEditingBookingId] = useState("");
 
   const bookingEndpoint = useMemo(() => {
     return statusFilter ? `/api/bookings?status=${statusFilter}` : "/api/bookings";
@@ -89,14 +90,61 @@ export default function BookingsPage() {
 
     try {
       setSubmitting(true);
-      await apiPost("/api/bookings", form, user);
-      setMessage("Booking request submitted successfully.");
+      if (editingBookingId) {
+        await apiPut(`/api/bookings/${editingBookingId}`, {
+          bookingDate: form.bookingDate,
+          startTime: form.startTime,
+          endTime: form.endTime,
+          purpose: form.purpose,
+          expectedAttendees: form.expectedAttendees
+        }, user);
+        setMessage("Booking updated successfully.");
+      } else {
+        await apiPost("/api/bookings", form, user);
+        setMessage("Booking request submitted successfully.");
+      }
       setForm(buildInitialForm());
+      setEditingBookingId("");
       await loadBookings();
     } catch (saveError) {
       setError(saveError.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function handleEditClick(booking) {
+    setForm({
+      resourceId: booking.resourceId,
+      bookingDate: booking.bookingDate,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      purpose: booking.purpose,
+      expectedAttendees: booking.expectedAttendees
+    });
+    setEditingBookingId(booking.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleCancelEdit() {
+    setForm(buildInitialForm());
+    setEditingBookingId("");
+  }
+
+  async function handleDeleteBooking(bookingId) {
+    const confirmed = window.confirm("Are you sure you want to completely delete this booking?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError("");
+      setMessage("");
+      await apiDelete(`/api/bookings/${bookingId}`, user);
+      setMessage("Booking deleted successfully.");
+      await loadBookings();
+    } catch (deleteError) {
+      setError(deleteError.message);
     }
   }
 
@@ -148,7 +196,7 @@ export default function BookingsPage() {
       <div className="booking-layout">
         {!isAdmin ? (
           <div className="booking-panel">
-            <h3>Create booking request</h3>
+            <h3>{editingBookingId ? "Edit booking request" : "Create booking request"}</h3>
 
             <form className="booking-form" onSubmit={handleCreateBooking}>
               <label className="field">
@@ -156,6 +204,7 @@ export default function BookingsPage() {
                 <select
                   value={form.resourceId}
                   onChange={(event) => updateForm("resourceId", event.target.value)}
+                  disabled={!!editingBookingId}
                   required
                 >
                   <option value="">Select a resource</option>
@@ -224,9 +273,16 @@ export default function BookingsPage() {
                 />
               </label>
 
-              <button type="submit" className="primary-button" disabled={submitting || resourcesLoading}>
-                {submitting ? "Submitting..." : "Submit booking"}
-              </button>
+              <div className="action-row">
+                <button type="submit" className="primary-button" disabled={submitting || resourcesLoading}>
+                  {submitting ? "Submitting..." : editingBookingId ? "Update booking" : "Submit booking"}
+                </button>
+                {editingBookingId ? (
+                  <button type="button" className="secondary-button" onClick={handleCancelEdit}>
+                    Cancel edit
+                  </button>
+                ) : null}
+              </div>
             </form>
           </div>
         ) : null}
@@ -321,13 +377,33 @@ export default function BookingsPage() {
                   ) : null}
 
                   {canCancel(booking.status) ? (
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => handleCancel(booking.id)}
-                    >
-                      Cancel booking
-                    </button>
+                    <div className="action-row">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => handleCancel(booking.id)}
+                      >
+                        Cancel
+                      </button>
+                      {!isAdmin && booking.status === "PENDING" ? (
+                        <>
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => handleEditClick(booking)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="danger-button"
+                            onClick={() => handleDeleteBooking(booking.id)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
               </article>

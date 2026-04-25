@@ -15,6 +15,7 @@ import com.vaas.paf.security.UserRole;
 import com.vaas.paf.ticket.dto.AssignTechnicianRequest;
 import com.vaas.paf.ticket.dto.CreateTicketRequest;
 import com.vaas.paf.ticket.dto.TicketResponse;
+import com.vaas.paf.ticket.dto.UpdateTicketRequest;
 import com.vaas.paf.ticket.dto.UpdateTicketStatusRequest;
 import com.vaas.paf.ticket.model.TicketDocument;
 import com.vaas.paf.ticket.model.TicketStatus;
@@ -113,6 +114,44 @@ public class TicketService {
 				saved.getId());
 
 		return toResponse(saved);
+	}
+
+	public TicketResponse update(String ticketId, UpdateTicketRequest request) {
+		validateAttachments(request.attachmentUrls());
+		TicketDocument ticket = getDocument(ticketId);
+		AuthenticatedUser user = accessGuard.currentUser();
+		
+		if (user.role() != UserRole.ADMIN && !ticket.getReporterId().equals(user.userId())) {
+			throw new AppException(HttpStatus.FORBIDDEN, "You can update only your own tickets.");
+		}
+		if (ticket.getStatus() != TicketStatus.OPEN) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Only open tickets can be updated.");
+		}
+
+		ticket.setResourceId(request.resourceId());
+		ticket.setLocation(request.location());
+		ticket.setCategory(request.category());
+		ticket.setDescription(request.description());
+		ticket.setPriority(request.priority());
+		ticket.setPreferredContact(request.preferredContact());
+		ticket.setAttachmentUrls(request.attachmentUrls() == null ? List.of() : request.attachmentUrls());
+		ticket.setUpdatedAt(Instant.now());
+
+		return toResponse(ticketRepository.save(ticket));
+	}
+
+	public void delete(String ticketId) {
+		TicketDocument ticket = getDocument(ticketId);
+		AuthenticatedUser user = accessGuard.currentUser();
+
+		if (user.role() != UserRole.ADMIN && !ticket.getReporterId().equals(user.userId())) {
+			throw new AppException(HttpStatus.FORBIDDEN, "You can delete only your own tickets.");
+		}
+		if (ticket.getStatus() != TicketStatus.OPEN) {
+			throw new AppException(HttpStatus.BAD_REQUEST, "Only open tickets can be deleted.");
+		}
+
+		ticketRepository.delete(ticket);
 	}
 
 	public TicketDocument getDocument(String ticketId) {

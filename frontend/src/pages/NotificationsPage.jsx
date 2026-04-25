@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../auth/AuthContext";
-import { apiPatch } from "../lib/api";
+import { apiDelete, apiPatch } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 
 export default function NotificationsPage() {
@@ -54,6 +54,19 @@ export default function NotificationsPage() {
         current.map((notification) => byId.get(notification.id) ?? notification)
       );
       setMessage("All notifications marked as read.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function handleDeleteNotification(notificationId) {
+    try {
+      setBusyId(notificationId);
+      await apiDelete(`/api/notifications/${notificationId}`, user);
+      setNotifications((current) => current.filter((n) => n.id !== notificationId));
+      setMessage("Notification deleted.");
+    } catch (deleteError) {
+      setMessage(`Failed to delete: ${deleteError.message}`);
     } finally {
       setBusyId("");
     }
@@ -117,8 +130,27 @@ export default function NotificationsPage() {
                 >
                   {busyId === notification.id ? "Updating..." : "Mark as read"}
                 </button>
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() => handleDeleteNotification(notification.id)}
+                  disabled={busyId === notification.id}
+                >
+                  Delete
+                </button>
               </div>
-            ) : null}
+            ) : (
+              <div className="resource-card-actions">
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() => handleDeleteNotification(notification.id)}
+                  disabled={busyId === notification.id}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </article>
         ))}
 

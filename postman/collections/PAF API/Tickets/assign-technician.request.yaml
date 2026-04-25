@@ -1,0 +1,17 @@
+$kind: http-request
+name: 'Assign Technician'
+method: PATCH
+url: '{{baseUrl}}/api/tickets/{{ticketId}}/assign'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "technicianId": "TECH001",
+      "technicianName": "Alex Perera"
+    }

@@ -1,0 +1,20 @@
+$kind: http-request
+name: 'Update Profile'
+method: PUT
+url: '{{baseUrl}}/api/auth/me'
+order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "sahanvaas",
+      "firstName": "Sahan",
+      "lastName": "Vaas",
+      "newPassword": "NewPassword123",
+      "confirmNewPassword": "NewPassword123"
+    }

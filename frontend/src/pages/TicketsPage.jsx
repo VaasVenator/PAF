@@ -60,6 +60,7 @@ export default function TicketsPage() {
   const [commentDraft, setCommentDraft] = useState("");
   const [editingCommentId, setEditingCommentId] = useState("");
   const [editingCommentMessage, setEditingCommentMessage] = useState("");
+  const [editingTicketId, setEditingTicketId] = useState("");
 
   const selectedTicket = useMemo(
     () => tickets.find((ticket) => ticket.id === selectedTicketId) ?? null,
@@ -189,24 +190,68 @@ export default function TicketsPage() {
     setMessage("");
 
     try {
-      await apiPost(
-        "/api/tickets",
-        {
-          ...ticketForm,
-          resourceId: ticketForm.resourceId || null,
-          attachmentUrls: ticketForm.attachmentUrls
-            .map((item) => item.trim())
-            .filter(Boolean)
-        },
-        user
-      );
-      setMessage("Ticket created successfully.");
+      const ticketPayload = {
+        ...ticketForm,
+        resourceId: ticketForm.resourceId || null,
+        attachmentUrls: ticketForm.attachmentUrls
+          .map((item) => item.trim())
+          .filter(Boolean)
+      };
+
+      if (editingTicketId) {
+        await apiPut(`/api/tickets/${editingTicketId}`, ticketPayload, user);
+        setMessage("Ticket updated successfully.");
+      } else {
+        await apiPost("/api/tickets", ticketPayload, user);
+        setMessage("Ticket created successfully.");
+      }
+
       setTicketForm(emptyTicketForm);
+      setEditingTicketId("");
       await loadTickets();
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  function handleEditTicketClick(ticket) {
+    setTicketForm({
+      resourceId: ticket.resourceId || "",
+      location: ticket.location || "",
+      category: ticket.category || "HARDWARE",
+      description: ticket.description || "",
+      priority: ticket.priority || "MEDIUM",
+      preferredContact: ticket.preferredContact || "",
+      attachmentUrls: ticket.attachmentUrls?.length ? ticket.attachmentUrls : [""]
+    });
+    setEditingTicketId(ticket.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleCancelEditTicket() {
+    setTicketForm(emptyTicketForm);
+    setEditingTicketId("");
+  }
+
+  async function handleDeleteTicket(ticketId) {
+    const confirmed = window.confirm("Are you sure you want to completely delete this ticket?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError("");
+      setMessage("");
+      await apiDelete(`/api/tickets/${ticketId}`, user);
+      setMessage("Ticket deleted successfully.");
+      if (selectedTicketId === ticketId) {
+        setSelectedTicketId("");
+      }
+      await loadTickets();
+    } catch (deleteError) {
+      setError(deleteError.message);
     }
   }
 
@@ -374,7 +419,7 @@ export default function TicketsPage() {
 
       <div className="booking-layout">
         <div className="booking-panel">
-          <h3>Report a new issue</h3>
+          <h3>{editingTicketId ? "Edit ticket" : "Report a new issue"}</h3>
 
           <form className="booking-form" onSubmit={handleCreateTicket}>
             <label className="field">
@@ -382,6 +427,7 @@ export default function TicketsPage() {
               <select
                 value={ticketForm.resourceId}
                 onChange={(event) => updateTicketField("resourceId", event.target.value)}
+                disabled={!!editingTicketId}
               >
                 <option value="">Location-only issue</option>
                 {resources.map((resource) => (
@@ -485,9 +531,16 @@ export default function TicketsPage() {
               </div>
             </div>
 
-            <button type="submit" className="primary-button" disabled={saving || resourcesLoading}>
-              {saving ? "Submitting..." : "Create ticket"}
-            </button>
+            <div className="action-row">
+              <button type="submit" className="primary-button" disabled={saving || resourcesLoading}>
+                {saving ? "Submitting..." : editingTicketId ? "Update ticket" : "Create ticket"}
+              </button>
+              {editingTicketId ? (
+                <button type="button" className="secondary-button" onClick={handleCancelEditTicket}>
+                  Cancel edit
+                </button>
+              ) : null}
+            </div>
           </form>
         </div>
 
@@ -532,6 +585,24 @@ export default function TicketsPage() {
                   >
                     {selectedTicketId === ticket.id ? "Viewing details" : "View details"}
                   </button>
+                  {!isAdmin && ticket.status === "OPEN" ? (
+                    <>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => handleEditTicketClick(ticket)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={() => handleDeleteTicket(ticket.id)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               </article>
             ))}

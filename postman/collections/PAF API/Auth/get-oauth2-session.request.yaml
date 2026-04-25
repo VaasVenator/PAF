@@ -1,0 +1,8 @@
+$kind: http-request
+name: 'Get OAuth2 Session'
+method: GET
+url: '{{baseUrl}}/api/auth/oauth2/session'
+order: 3000
+headers:
+  - key: Accept
+    value: application/json

@@ -1,0 +1,21 @@
+$kind: http-request
+name: 'Create Booking'
+method: POST
+url: '{{baseUrl}}/api/bookings'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "resourceId": "{{resourceId}}",
+      "bookingDate": "2026-05-01",
+      "startTime": "10:00:00",
+      "endTime": "12:00:00",
+      "purpose": "Guest lecture session",
+      "expectedAttendees": 80
+    }
